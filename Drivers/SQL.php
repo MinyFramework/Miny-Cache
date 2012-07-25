@@ -29,7 +29,7 @@ namespace Miny\Cache\Drivers;
 
 use \Modules\Cache\AbstractCacheDriver;
 
-class SQLCacheDriver extends AbstractCacheDriver
+class SQL extends AbstractCacheDriver
 {
     protected static $queries = array(
         'gc'     => 'DELETE FROM `%s` WHERE `expiration` < NOW()',

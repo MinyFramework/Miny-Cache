@@ -29,7 +29,7 @@ namespace Modules\Cache\Drivers;
 use \Modules\ORM\Manager;
 use \Modules\Cache\AbstractCacheDriver;
 
-class ORMCacheDriver extends AbstractCacheDriver
+class ORM extends AbstractCacheDriver
 {
     private $table;
 
