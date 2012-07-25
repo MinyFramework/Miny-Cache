@@ -27,72 +27,46 @@
 namespace Modules\Cache\Drivers;
 
 use \Modules\ORM\Manager;
-use \Modules\Cache\iCacheDriver;
+use \Modules\Cache\AbstractCacheDriver;
 
-class ORMCacheDriver implements iCacheDriver
+class ORMCacheDriver extends AbstractCacheDriver
 {
-    private $keys = array();
-    private $data = array();
-    private $ttls = array();
     private $table;
 
     public function __construct(Manager $manager, $table_name)
     {
-        register_shutdown_function(array($this, 'close'));
         $this->table = $manager->$table_name;
+        parent::__construct();
+    }
 
+    public function gc()
+    {
         $this->table->deleteRows('expiration < NOW()');
-        foreach ($this->table as $row) {
+    }
+
+    public function index()
+    {
+        foreach ($this->table as $key) {
             $this->keys[$row['id']] = 1;
         }
     }
 
-    public function has($key)
-    {
-        return array_key_exists($key, $this->keys) && $this->keys[$key] != 'r';
-    }
-
     public function get($key)
     {
-        if (!$this->has($key)) {
-            throw new \OutOfBoundsException('Key not found: ' . $key);
-        }
+        $this->checkKey($key);
         if (!array_key_exists($key, $this->data)) {
-            $this->data[$key] = unserialize($this->table[$key]['data']);
+            try {
+                $this->data[$key] = unserialize($this->table[$key]['data']);
+            } catch (\OutOfBoundsException $e) {
+                $this->keyNotFound($key, $e);
+            }
         }
         return $this->data[$key];
     }
 
-    public function store($key, $data, $ttl)
-    {
-        if (isset($this->keys[$key])) {
-            if ($this->keys[$key] != 'a') {
-                $this->keys[$key] = 'm';
-            }
-        } else {
-            $this->keys[$key] = 'a';
-        }
-        $this->data[$key] = $data;
-        $this->ttls[$key] = $ttl;
-    }
-
-    public function remove($key)
-    {
-        if (!isset($this->keys[$key])) {
-            return;
-        }
-        if ($this->keys[$key] == 'a') {
-            unset($this->keys[$key]);
-        } else {
-            $this->keys[$key] = 'r';
-        }
-        unset($this->data[$key]);
-        unset($this->ttls[$key]);
-    }
-
     public function close()
     {
-        $save = (in_array('r', $this->keys) || in_array('m', $this->keys) || in_array('a', $this->keys));
+        $save = (bool) array_intersect($this->keys, array('r', 'm', 'a'));
 
         if ($save) {
             $db = $this->table->manager->connection;
@@ -101,7 +75,7 @@ class ORMCacheDriver implements iCacheDriver
                 switch ($state) {
                     case 'a':
                         $this->table->insert(array(
-                            'id'        => $key,
+                            'id'         => $key,
                             'expiration' => date('Y-m-d H:i:s', time() + $this->ttls[$key]),
                             'data'       => serialize($this->data[$key])
                         ));
