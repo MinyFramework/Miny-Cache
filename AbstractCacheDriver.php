@@ -36,7 +36,11 @@ abstract class AbstractCacheDriver implements iCacheDriver
     {
         $this->gc();
         $this->index();
-        register_shutdown_function(array($this, 'close'));
+    }
+
+    public function __destruct()
+    {
+        $this->close();
     }
 
     protected function checkKey($key)
@@ -49,7 +53,6 @@ abstract class AbstractCacheDriver implements iCacheDriver
     protected abstract function gc();
     protected abstract function index();
     protected abstract function close();
-
     protected function keyNotFound($key, \Exception $prev = NULL)
     {
         throw new \OutOfBoundsException('Key not found: ' . $key, 0, $prev);
