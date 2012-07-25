@@ -25,7 +25,7 @@
  *
  */
 
-namespace Miny\Cache\Drivers;
+namespace Modules\Cache\Drivers;
 
 use \Modules\Cache\AbstractCacheDriver;
 
@@ -33,9 +33,13 @@ class Session extends AbstractCacheDriver
 {
     public function gc()
     {
-        foreach ($_SESSION['cache'] as $key => $value) {
-            if (!isset($value['expiration']) || $value['expiration'] < time()) {
-                unset($_SESSION['cache'][$key]);
+        if (!isset($_SESSION['cache'])) {
+            $_SESSION['cache'] = array();
+        } else {
+            foreach ($_SESSION['cache'] as $key => $value) {
+                if (!isset($value['expiration']) || $value['expiration'] < time()) {
+                    unset($_SESSION['cache'][$key]);
+                }
             }
         }
     }

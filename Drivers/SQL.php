@@ -25,7 +25,7 @@
  *
  */
 
-namespace Miny\Cache\Drivers;
+namespace Modules\Cache\Drivers;
 
 use \Modules\Cache\AbstractCacheDriver;
 

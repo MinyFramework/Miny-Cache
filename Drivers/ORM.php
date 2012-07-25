@@ -47,7 +47,7 @@ class ORM extends AbstractCacheDriver
     public function index()
     {
         foreach ($this->table as $key) {
-            $this->keys[$row['id']] = 1;
+            $this->keys[$key['id']] = 1;
         }
     }
 
