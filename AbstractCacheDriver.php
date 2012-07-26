@@ -90,4 +90,9 @@ abstract class AbstractCacheDriver implements iCacheDriver
         $this->ttls[$key] = $ttl;
     }
 
+    protected function saveRequired()
+    {
+        return (bool) array_intersect($this->keys, array('r', 'm', 'a'));
+    }
+
 }

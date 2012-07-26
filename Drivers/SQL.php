@@ -62,12 +62,12 @@ class SQL extends AbstractCacheDriver
         return $this->driver->prepare($this->getQuery($query));
     }
 
-    public function gc()
+    protected function gc()
     {
         $this->driver->exec($this->getQuery('gc'));
     }
 
-    public function index()
+    protected function index()
     {
         foreach ($this->driver->query($this->getQuery('index')) as $row) {
             $this->keys[$row['id']] = 1;
@@ -90,7 +90,7 @@ class SQL extends AbstractCacheDriver
         return $this->data[$key];
     }
 
-    public function close()
+    protected function close()
     {
         $save = false;
         if (in_array('r', $this->keys)) {
@@ -102,28 +102,29 @@ class SQL extends AbstractCacheDriver
             $modify_statement = $this->getStatement('modify');
         }
 
-        if ($save) {
-            $this->driver->beginTransaction();
-            foreach ($this->keys as $key => $state) {
-                switch ($state) {
-                    case 'm':
-                    case 'a':
-                        $ttl = $this->ttls[$key];
-                        $array = array(
-                            'id'         => $key,
-                            'expiration' => date('Y-m-d H:i:s', time() + $ttl),
-                            'value'      => serialize($this->data[$key])
-                        );
-                        $modify_statement->execute($array);
-                        break;
-                    case 'r':
-                        $delete_statement->bindValue(':key', $key);
-                        $delete_statement->execute();
-                        break;
-                }
-            }
-            $this->driver->commit();
+        if (!$save) {
+            return;
         }
+        $this->driver->beginTransaction();
+        foreach ($this->keys as $key => $state) {
+            switch ($state) {
+                case 'm':
+                case 'a':
+                    $ttl = $this->ttls[$key];
+                    $array = array(
+                        'id'         => $key,
+                        'expiration' => date('Y-m-d H:i:s', time() + $ttl),
+                        'value'      => serialize($this->data[$key])
+                    );
+                    $modify_statement->execute($array);
+                    break;
+                case 'r':
+                    $delete_statement->bindValue(':key', $key);
+                    $delete_statement->execute();
+                    break;
+            }
+        }
+        $this->driver->commit();
     }
 
 }

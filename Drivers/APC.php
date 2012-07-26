@@ -29,37 +29,35 @@ namespace Modules\Cache\Drivers;
 
 use \Modules\Cache\AbstractCacheDriver;
 
-class Session extends AbstractCacheDriver
+class APC extends AbstractCacheDriver
 {
-    protected function gc()
+    protected function index()
     {
-        if (!isset($_SESSION['cache'])) {
-            $_SESSION['cache'] = array();
-        } else {
-            foreach ($_SESSION['cache'] as $key => $value) {
-                if (!isset($value['expiration']) || $value['expiration'] < time()) {
-                    unset($_SESSION['cache'][$key]);
-                }
+        $keys = apc_fetch('cache.index', &$success);
+        if ($success) {
+            foreach ($keys as $key) {
+                $this->keys[$key] = 1;
             }
         }
     }
 
-    protected function index()
+    protected function gc()
     {
-        foreach ($_SESSION['cache'] as $key => $value) {
-            $this->keys[$key] = 1;
-            $this->data[$key] = unserialize($value['value']);
-        }
+
     }
 
     public function get($key)
     {
-        $this->checkKey($key);
         if (!array_key_exists($key, $this->data)) {
-            if (!isset($_SESSION['cache'][$key])) {
+            if (apc_exists('cache.' . $key)) {
+                $data = apc_fetch('cache.' . $key, &$success);
+                if (!$success) {
+                    $this->keyNotFound($key);
+                }
+                $this->data[$key] = $data;
+            } else {
                 $this->keyNotFound($key);
             }
-            $this->data[$key] = unserialize($_SESSION['cache'][$key]['value']);
         }
         return $this->data[$key];
     }
@@ -73,13 +71,10 @@ class Session extends AbstractCacheDriver
             switch ($state) {
                 case 'm':
                 case 'a':
-                    $_SESSION['cache'][$key] = array(
-                        'expiration' => time() + $this->ttls[$key],
-                        'value'      => serialize($this->data[$key])
-                    );
+                    apc_store('cache.' . $key, $this->data[$key], $this->ttls[$key]);
                     break;
                 case 'r':
-                    unset($_SESSION['cache'][$key]);
+                    apc_remove('cache.' . $key);
                     break;
             }
         }

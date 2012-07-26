@@ -39,12 +39,12 @@ class ORM extends AbstractCacheDriver
         parent::__construct();
     }
 
-    public function gc()
+    protected function gc()
     {
         $this->table->deleteRows('expiration < NOW()');
     }
 
-    public function index()
+    protected function index()
     {
         foreach ($this->table as $key) {
             $this->keys[$key['id']] = 1;
@@ -64,36 +64,35 @@ class ORM extends AbstractCacheDriver
         return $this->data[$key];
     }
 
-    public function close()
+    protected function close()
     {
-        $save = (bool) array_intersect($this->keys, array('r', 'm', 'a'));
-
-        if ($save) {
-            $db = $this->table->manager->connection;
-            $db->beginTransaction();
-            foreach ($this->keys as $key => $state) {
-                switch ($state) {
-                    case 'a':
-                        $this->table->insert(array(
-                            'id'         => $key,
-                            'expiration' => date('Y-m-d H:i:s', time() + $this->ttls[$key]),
-                            'data'       => serialize($this->data[$key])
-                        ));
-                        break;
-                    case 'm':
-                        $data = array(
-                            'expiration' => date('Y-m-d H:i:s', time() + $this->ttls[$key]),
-                            'data'       => serialize($this->data[$key])
-                        );
-                        $this->table->update($key, $data);
-                        break;
-                    case 'r':
-                        $this->table->delete($key);
-                        break;
-                }
-            }
-            $db->commit();
+        if (!$this->saveRequired()) {
+            return;
         }
+        $db = $this->table->manager->connection;
+        $db->beginTransaction();
+        foreach ($this->keys as $key => $state) {
+            switch ($state) {
+                case 'a':
+                    $this->table->insert(array(
+                        'id'         => $key,
+                        'expiration' => date('Y-m-d H:i:s', time() + $this->ttls[$key]),
+                        'data'       => serialize($this->data[$key])
+                    ));
+                    break;
+                case 'm':
+                    $data = array(
+                        'expiration' => date('Y-m-d H:i:s', time() + $this->ttls[$key]),
+                        'data'       => serialize($this->data[$key])
+                    );
+                    $this->table->update($key, $data);
+                    break;
+                case 'r':
+                    $this->table->delete($key);
+                    break;
+            }
+        }
+        $db->commit();
     }
 
 }
