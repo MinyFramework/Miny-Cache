@@ -66,20 +66,18 @@ class APC extends AbstractCacheDriver
         if (!$this->saveRequired()) {
             return;
         }
-        $keys = array();
+        apc_store('cache.index', array_keys($this->keys));
         foreach ($this->keys as $key => $state) {
             switch ($state) {
                 case 'm':
                 case 'a':
                     apc_store('cache.' . $key, $this->data[$key], $this->ttls[$key]);
-                    $keys[] = $key;
                     break;
                 case 'r':
                     apc_remove('cache.' . $key);
                     break;
             }
         }
-        apc_store('cache.index', $keys);
     }
 
 }
