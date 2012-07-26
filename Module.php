@@ -30,12 +30,15 @@ use \Miny\Application\Application;
 
 class Module extends \Miny\Application\Module
 {
-    public function init(Application $app)
+    public function init(Application $app, $default_cache = NULL)
     {
         $app->add('sql_cache', __NAMESPACE__ . '\Drivers\SQL');
         $app->add('session_cache', __NAMESPACE__ . '\Drivers\Session');
         $app->add('apc_cache', __NAMESPACE__ . '\Drivers\APC');
         $app->add('orm_cache', __NAMESPACE__ . '\Drivers\ORM');
+        if (in_array($default_cache, array('sql', 'session', 'apc', 'orm'))) {
+            $app->addAlias('cache', $default_cache . '_cache');
+        }
     }
 
 }
