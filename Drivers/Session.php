@@ -74,7 +74,7 @@ class Session extends AbstractCacheDriver
                     case 'm':
                     case 'a':
                         $_SESSION['cache'][$key] = array(
-                            'expiration' => date('Y-m-d H:i:s', time() + $this->ttls[$key]),
+                            'expiration' => time() + $this->ttls[$key],
                             'value'      => serialize($this->data[$key])
                         );
                         break;
