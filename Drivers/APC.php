@@ -33,7 +33,7 @@ class APC extends AbstractCacheDriver
 {
     protected function index()
     {
-        $keys = apc_fetch('cache.index', &$success);
+        $keys = apc_fetch('cache.index', $success);
         if ($success) {
             foreach ($keys as $key) {
                 $this->keys[$key] = 1;
@@ -49,15 +49,14 @@ class APC extends AbstractCacheDriver
     public function get($key)
     {
         if (!array_key_exists($key, $this->data)) {
-            if (apc_exists('cache.' . $key)) {
-                $data = apc_fetch('cache.' . $key, &$success);
-                if (!$success) {
-                    $this->keyNotFound($key);
-                }
-                $this->data[$key] = $data;
-            } else {
+            if (!apc_exists('cache.' . $key)) {
                 $this->keyNotFound($key);
             }
+            $data = apc_fetch('cache.' . $key, $success);
+            if (!$success) {
+                $this->keyNotFound($key);
+            }
+            $this->data[$key] = $data;
         }
         return $this->data[$key];
     }
@@ -67,17 +66,20 @@ class APC extends AbstractCacheDriver
         if (!$this->saveRequired()) {
             return;
         }
+        $keys = array();
         foreach ($this->keys as $key => $state) {
             switch ($state) {
                 case 'm':
                 case 'a':
                     apc_store('cache.' . $key, $this->data[$key], $this->ttls[$key]);
+                    $keys[] = $key;
                     break;
                 case 'r':
                     apc_remove('cache.' . $key);
                     break;
             }
         }
+        apc_store('cache.index', $keys);
     }
 
 }

@@ -32,7 +32,10 @@ class Module extends \Miny\Application\Module
 {
     public function init(Application $app)
     {
-
+        $app->add('sql_cache', __NAMESPACE__ . '\Drivers\SQL');
+        $app->add('session_cache', __NAMESPACE__ . '\Drivers\Session');
+        $app->add('apc_cache', __NAMESPACE__ . '\Drivers\APC');
+        $app->add('orm_cache', __NAMESPACE__ . '\Drivers\ORM');
     }
 
 }
