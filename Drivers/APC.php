@@ -35,8 +35,11 @@ class APC extends AbstractCacheDriver
     {
         $keys = apc_fetch('cache.index', $success);
         if ($success) {
-            foreach ($keys as $key) {
-                $this->keys[$key] = 1;
+            $time = time();
+            foreach ($keys as $key => $expiration) {
+                if ($expiration >= $time) {
+                    $this->keys[$key] = 1;
+                }
             }
         }
     }
@@ -66,11 +69,12 @@ class APC extends AbstractCacheDriver
         if (!$this->saveRequired()) {
             return;
         }
-        apc_store('cache.index', array_keys($this->keys));
+        $keys = array();
         foreach ($this->keys as $key => $state) {
             switch ($state) {
                 case 'm':
                 case 'a':
+                    $keys[$key] = time() + $this->ttls[$key];
                     apc_store('cache.' . $key, $this->data[$key], $this->ttls[$key]);
                     break;
                 case 'r':
@@ -78,6 +82,7 @@ class APC extends AbstractCacheDriver
                     break;
             }
         }
+        apc_store('cache.index', $keys);
     }
 
 }
