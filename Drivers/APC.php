@@ -38,7 +38,7 @@ class APC extends AbstractCacheDriver
             $time = time();
             foreach ($keys as $key => $expiration) {
                 if ($expiration >= $time) {
-                    $this->keys[$key] = 1;
+                    $this->keys[$key] = $expiration;
                 }
             }
         }
@@ -79,6 +79,9 @@ class APC extends AbstractCacheDriver
                     break;
                 case 'r':
                     apc_remove('cache.' . $key);
+                    break;
+                default:
+                    $keys[$key] = $state;
                     break;
             }
         }
