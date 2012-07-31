@@ -27,9 +27,8 @@
 namespace Modules\Cache;
 
 use Miny\Application\Application;
-use Miny\Application\Module;
 
-class Module extends Module
+class Module extends \Miny\Application\Module
 {
     public function init(Application $app, $default_cache = NULL)
     {
