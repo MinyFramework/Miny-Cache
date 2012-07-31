@@ -21,13 +21,14 @@
  * @copyright 2012 Dániel Buga <daniel@bugadani.hu>
  * @license   http://www.gnu.org/licenses/gpl.txt
  *            GNU General Public License
- * @version   1.0
- *
+ * @version   1.0-dev
  */
 
 namespace Modules\Cache\Drivers;
 
-use \Modules\Cache\AbstractCacheDriver;
+use Modules\Cache\AbstractCacheDriver;
+use OutOfBoundsException;
+use PDO;
 
 class SQL extends AbstractCacheDriver
 {
@@ -42,7 +43,7 @@ class SQL extends AbstractCacheDriver
     private $table_name;
     private $driver;
 
-    public function __construct(\PDO $driver, $table_name)
+    public function __construct(PDO $driver, $table_name)
     {
         $this->driver = $driver;
         $this->table_name = $table_name;
@@ -52,7 +53,7 @@ class SQL extends AbstractCacheDriver
     protected function getQuery($query)
     {
         if (!isset(static::$queries[$query])) {
-            throw new \OutOfBoundsException('Query not set: ' . $query);
+            throw new OutOfBoundsException('Query not set: ' . $query);
         }
         return sprintf(static::$queries[$query], $this->table_name);
     }

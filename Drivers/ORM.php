@@ -21,13 +21,14 @@
  * @copyright 2012 Dániel Buga <daniel@bugadani.hu>
  * @license   http://www.gnu.org/licenses/gpl.txt
  *            GNU General Public License
- * @version   1.0
+ * @version   1.0-dev
  */
 
 namespace Modules\Cache\Drivers;
 
-use \Modules\ORM\Manager;
-use \Modules\Cache\AbstractCacheDriver;
+use Modules\Cache\AbstractCacheDriver;
+use Modules\ORM\Manager;
+use OutOfBoundsException;
 
 class ORM extends AbstractCacheDriver
 {
@@ -57,7 +58,7 @@ class ORM extends AbstractCacheDriver
         if (!array_key_exists($key, $this->data)) {
             try {
                 $this->data[$key] = unserialize($this->table[$key]['data']);
-            } catch (\OutOfBoundsException $e) {
+            } catch (OutOfBoundsException $e) {
                 $this->keyNotFound($key, $e);
             }
         }
