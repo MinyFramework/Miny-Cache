@@ -9,11 +9,11 @@
 
 namespace Modules\Cache;
 
-use Miny\Application\Application;
+use Miny\Application\BaseApplication;
 
 class Module extends \Miny\Application\Module
 {
-    public function init(Application $app)
+    public function init(BaseApplication $app)
     {
         $app->add('sql_cache', __NAMESPACE__ . '\Drivers\SQL');
         $app->add('session_cache', __NAMESPACE__ . '\Drivers\Session');
