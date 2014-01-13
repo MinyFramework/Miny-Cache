@@ -1,13 +1,15 @@
 <?php
 
-namespace Modules\Cache;
+namespace Modules\Cache\ResponseCache;
 
+use Miny\Application\Application;
 use Miny\HTTP\Request;
-use Miny\HTTP\Response;
 use Miny\Log;
+use Modules\Cache\iCacheDriver;
 
 class HTTPCache
 {
+    private $application;
     private $cache;
     private $log;
     private $from_cache;
@@ -15,8 +17,9 @@ class HTTPCache
     private $path_patterns;
     private $cache_lifetime;
 
-    public function __construct(iCacheDriver $cache, Log $log, $cache_lifetime = 600)
+    public function __construct(Application $app, iCacheDriver $cache, Log $log, $cache_lifetime = 600)
     {
+        $this->application    = $app;
         $this->cache          = $cache;
         $this->log            = $log;
         $this->from_cache     = false;
@@ -52,11 +55,18 @@ class HTTPCache
             return;
         }
         if ($this->cache->has($request->path)) {
-            list($response, $content) = $this->cache->get($request->path);
-            if (!empty($content)) {
+            $response = $this->cache->get($request->path);
+            if (!empty($response)) {
                 $this->log->info('Cache hit for path: %s', $request->path);
                 $this->from_cache = true;
-                echo $content;
+                $main = $this->application->response;
+                foreach ($response->getParts() as $part) {
+                    if ($part instanceof CachedResponse) {
+                        $main->addResponse($this->application->dispatch($part->getRequest()));
+                    } else {
+                        $main->addContent($part);
+                    }
+                }
                 return $response;
             }
         }
@@ -76,7 +86,7 @@ class HTTPCache
         return false;
     }
 
-    public function store(Request $request, Response $response)
+    public function store(Request $request, CachedResponse $response)
     {
         if ($this->cache === null) {
             return;
@@ -87,7 +97,7 @@ class HTTPCache
             }
         }
         if (!$this->from_cache && $response->isCode(200) && $request->method === 'GET') {
-            $this->cache->store($request->path, array($response, ob_get_contents()), $this->cache_lifetime);
+            $this->cache->store($request->path, $response, $this->cache_lifetime);
         }
     }
 }

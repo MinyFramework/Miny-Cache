@@ -24,7 +24,7 @@ class SQL extends AbstractCacheDriver
                 VALUES(:id, :value, :expiration)'
     );
     private $table_name;
-    private $driver;
+    protected $driver;
 
     public function __construct(PDO $driver, $table_name)
     {
@@ -65,11 +65,12 @@ class SQL extends AbstractCacheDriver
             $statement = $this->getStatement('select');
             $statement->bindValue(':key', $key);
             $statement->execute();
-            if ($statement->rowCount() == 0) {
+            $data = $statement->fetchColumn(0);
+            if(!$data) {
                 //the key was deleted during an other request...
                 $this->keyNotFound($key);
             }
-            $this->data[$key] = unserialize($statement->fetchColumn(0));
+            $this->data[$key] = unserialize($data);
         }
         return $this->data[$key];
     }
