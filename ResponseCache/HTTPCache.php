@@ -54,10 +54,10 @@ class HTTPCache
         if ($this->cache === null) {
             return;
         }
-        if ($this->cache->has($request->path)) {
-            $response = $this->cache->get($request->path);
+        if ($this->cache->has($request->url)) {
+            $response = $this->cache->get($request->url);
             if (!empty($response)) {
-                $this->log->info('Cache hit for path: %s', $request->path);
+                $this->log->info('Cache hit for path: %s', $request->url);
                 $this->from_cache = true;
                 $main = $this->application->response;
                 foreach ($response->getParts() as $part) {
@@ -91,13 +91,13 @@ class HTTPCache
         if ($this->cache === null) {
             return;
         }
-        if (!in_array($request->path, $this->paths)) {
-            if (!$this->checkPathPatterns($request->path)) {
+        if (!in_array($request->url, $this->paths)) {
+            if (!$this->checkPathPatterns($request->url)) {
                 return;
             }
         }
         if (!$this->from_cache && $response->isCode(200) && $request->method === 'GET') {
-            $this->cache->store($request->path, $response, $this->cache_lifetime);
+            $this->cache->store($request->url, $response, $this->cache_lifetime);
         }
     }
 }
