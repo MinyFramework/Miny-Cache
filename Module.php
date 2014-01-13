@@ -34,12 +34,11 @@ class Module extends \Miny\Modules\Module
         $app->add('session_cache', __NAMESPACE__ . '\Drivers\Session');
         $app->add('apc_cache', __NAMESPACE__ . '\Drivers\APC');
         $app->add('orm_cache', __NAMESPACE__ . '\Drivers\ORM');
-        $app->add('file_cache', __NAMESPACE__ . '\Drivers\File');
         $app->add('sqlite_memory_cache', __NAMESPACE__ . '\Drivers\SQLite_Memory');
 
         $default_cache = $app['cache']['default_cache'];
 
-        if (in_array($default_cache, array('sql', 'session', 'apc', 'orm', 'file', 'sqlite_memory'))) {
+        if (in_array($default_cache, array('sql', 'session', 'apc', 'orm', 'sqlite_memory'))) {
             $app->addAlias('cache', $default_cache . '_cache');
         }
 
