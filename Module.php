@@ -30,27 +30,30 @@ class Module extends \Miny\Modules\Module
 
     public function init(BaseApplication $app)
     {
-        $app->add('sql_cache', __NAMESPACE__ . '\Drivers\SQL');
-        $app->add('session_cache', __NAMESPACE__ . '\Drivers\Session');
-        $app->add('apc_cache', __NAMESPACE__ . '\Drivers\APC');
-        $app->add('orm_cache', __NAMESPACE__ . '\Drivers\ORM');
-        $app->add('sqlite_memory_cache', __NAMESPACE__ . '\Drivers\SQLite_Memory');
+        $factory    = $app->getFactory();
+        $parameters = $factory->getParameters();
 
-        $default_cache = $app['cache']['default_cache'];
+        $factory->add('sql_cache', __NAMESPACE__ . '\Drivers\SQL');
+        $factory->add('session_cache', __NAMESPACE__ . '\Drivers\Session');
+        $factory->add('apc_cache', __NAMESPACE__ . '\Drivers\APC');
+        $factory->add('orm_cache', __NAMESPACE__ . '\Drivers\ORM');
+        $factory->add('sqlite_memory_cache', __NAMESPACE__ . '\Drivers\SQLite_Memory');
+
+        $default_cache = $parameters['cache']['default_cache'];
 
         if (in_array($default_cache, array('sql', 'session', 'apc', 'orm', 'sqlite_memory'))) {
-            $app->addAlias('cache', $default_cache . '_cache');
+            $factory->addAlias('cache', $default_cache . '_cache');
         }
 
-        if ($app['cache']['http_cache']['enabled']) {
-            $app->add('response', __NAMESPACE__ . '\ResponseCache\CachedResponse')
+        if ($parameters['cache']['http_cache']['enabled']) {
+            $factory->add('response', __NAMESPACE__ . '\ResponseCache\CachedResponse')
                     ->setArguments('&request');
 
-            $app->add('http_cache', __NAMESPACE__ . '\ResponseCache\HTTPCache')
+            $factory->add('http_cache', __NAMESPACE__ . '\ResponseCache\HTTPCache')
                     ->setArguments('&app', '&cache', '&log', '@cache:http_cache:cache_lifetime')
                     ->addMethodCall('addPaths', '@cache:http_cache:paths');
 
-            $app->getBlueprint('events')
+            $factory->getBlueprint('events')
                     ->addMethodCall('register', 'filter_request', '*http_cache::fetch')
                     ->addMethodCall('register', 'filter_response', '*http_cache::store');
         }
