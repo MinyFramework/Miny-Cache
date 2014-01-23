@@ -5,7 +5,7 @@ namespace Modules\Cache\ResponseCache;
 use Miny\Application\Application;
 use Miny\HTTP\Request;
 use Miny\Log;
-use Modules\Cache\iCacheDriver;
+use Modules\Cache\AbstractCacheDriver;
 
 class HTTPCache
 {
@@ -17,7 +17,7 @@ class HTTPCache
     private $path_patterns;
     private $cache_lifetime;
 
-    public function __construct(Application $app, iCacheDriver $cache, Log $log, $cache_lifetime = 600)
+    public function __construct(Application $app, AbstractCacheDriver $cache, Log $log, $cache_lifetime = 600)
     {
         $this->application    = $app;
         $this->cache          = $cache;
