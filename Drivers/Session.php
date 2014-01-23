@@ -13,14 +13,22 @@ use Modules\Cache\AbstractCacheDriver;
 
 class Session extends AbstractCacheDriver
 {
+    private $storage_key;
+
+    public function __construct($options)
+    {
+        $this->storage_key = $options['storage_key'];
+        parent::__construct();
+    }
+
     protected function gc()
     {
-        if (!isset($_SESSION['cache'])) {
+        if (!isset($_SESSION[$this->storage_key])) {
             $_SESSION['cache'] = array();
         } else {
-            foreach ($_SESSION['cache'] as $key => $value) {
+            foreach ($_SESSION[$this->storage_key] as $key => $value) {
                 if (!isset($value['expiration']) || $value['expiration'] < time()) {
-                    unset($_SESSION['cache'][$key]);
+                    unset($_SESSION[$this->storage_key][$key]);
                 }
             }
         }
@@ -28,7 +36,7 @@ class Session extends AbstractCacheDriver
 
     protected function index()
     {
-        foreach ($_SESSION['cache'] as $key => $value) {
+        foreach ($_SESSION[$this->storage_key] as $key => $value) {
             $this->keys[$key] = 1;
             $this->data[$key] = unserialize($value['value']);
         }
@@ -38,10 +46,10 @@ class Session extends AbstractCacheDriver
     {
         $this->checkKey($key);
         if (!array_key_exists($key, $this->data)) {
-            if (!isset($_SESSION['cache'][$key])) {
+            if (!isset($_SESSION[$this->storage_key][$key])) {
                 $this->keyNotFound($key);
             }
-            $this->data[$key] = unserialize($_SESSION['cache'][$key]['value']);
+            $this->data[$key] = unserialize($_SESSION[$this->storage_key][$key]['value']);
         }
         return $this->data[$key];
     }
@@ -55,17 +63,15 @@ class Session extends AbstractCacheDriver
             switch ($state) {
                 case 'm':
                 case 'a':
-                    $_SESSION['cache'][$key] = array(
+                    $_SESSION[$this->storage_key][$key] = array(
                         'expiration' => time() + $this->ttls[$key],
                         'value'      => serialize($this->data[$key])
                     );
                     break;
                 case 'r':
-                    unset($_SESSION['cache'][$key]);
+                    unset($_SESSION[$this->storage_key][$key]);
                     break;
             }
         }
     }
-
 }
-

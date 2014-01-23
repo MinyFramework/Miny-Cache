@@ -12,7 +12,7 @@ namespace Modules\Cache;
 use Exception;
 use OutOfBoundsException;
 
-abstract class AbstractCacheDriver implements iCacheDriver
+abstract class AbstractCacheDriver
 {
     protected $data = array();
     protected $keys = array();

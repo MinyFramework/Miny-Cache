@@ -13,9 +13,17 @@ use Modules\Cache\AbstractCacheDriver;
 
 class APC extends AbstractCacheDriver
 {
+    private $storage_key;
+
+    public function __construct($options)
+    {
+        $this->storage_key = $options['storage_key'];
+        parent::__construct();
+    }
+
     protected function index()
     {
-        $keys = apc_fetch('cache.index', $success);
+        $keys = apc_fetch($this->storage_key . '.index', $success);
         if ($success) {
             $time = time();
             foreach ($keys as $key => $expiration) {
@@ -34,10 +42,10 @@ class APC extends AbstractCacheDriver
     public function get($key)
     {
         if (!array_key_exists($key, $this->data)) {
-            if (!apc_exists('cache.' . $key)) {
+            if (!apc_exists($this->storage_key . '.' . $key)) {
                 $this->keyNotFound($key);
             }
-            $data = apc_fetch('cache.' . $key, $success);
+            $data = apc_fetch($this->storage_key . '.' . $key, $success);
             if (!$success) {
                 $this->keyNotFound($key);
             }
@@ -57,18 +65,16 @@ class APC extends AbstractCacheDriver
                 case 'm':
                 case 'a':
                     $keys[$key] = time() + $this->ttls[$key];
-                    apc_store('cache.' . $key, $this->data[$key], $this->ttls[$key]);
+                    apc_store($this->storage_key . '.' . $key, $this->data[$key], $this->ttls[$key]);
                     break;
                 case 'r':
-                    apc_remove('cache.' . $key);
+                    apc_remove($this->storage_key . '.' . $key);
                     break;
                 default:
                     $keys[$key] = $state;
                     break;
             }
         }
-        apc_store('cache.index', $keys);
+        apc_store($this->storage_key . '.index', $keys);
     }
-
 }
-
