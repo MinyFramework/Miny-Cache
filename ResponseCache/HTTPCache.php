@@ -59,7 +59,7 @@ class HTTPCache
             if (!empty($response)) {
                 $this->log->info('Cache hit for path: %s', $request->url);
                 $this->from_cache = true;
-                $main = $this->application->response;
+                $main = $this->application->getFactory()->get('response');
                 foreach ($response->getParts() as $part) {
                     if ($part instanceof CachedResponse) {
                         $main->addResponse($this->application->dispatch($part->getRequest()));
