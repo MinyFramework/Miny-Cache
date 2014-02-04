@@ -2,14 +2,14 @@
 
 namespace Modules\Cache\ResponseCache;
 
-use Miny\Application\Application;
+use Miny\Factory\Container;
 use Miny\HTTP\Request;
-use Miny\Log;
+use Miny\Log\Log;
 use Modules\Cache\AbstractCacheDriver;
 
 class HTTPCache
 {
-    private $application;
+    private $container;
     private $cache;
     private $log;
     private $from_cache;
@@ -17,9 +17,9 @@ class HTTPCache
     private $path_patterns;
     private $cache_lifetime;
 
-    public function __construct(Application $app, AbstractCacheDriver $cache, Log $log, $cache_lifetime = 600)
+    public function __construct(Container $container, AbstractCacheDriver $cache, Log $log, $cache_lifetime = 600)
     {
-        $this->application    = $app;
+        $this->container      = $container;
         $this->cache          = $cache;
         $this->log            = $log;
         $this->from_cache     = false;
@@ -49,31 +49,44 @@ class HTTPCache
         }
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return CachedResponse|null
+     */
     public function fetch(Request $request)
     {
         if ($this->cache === null) {
             return;
         }
-        if ($this->cache->has($request->url)) {
-            $response = $this->cache->get($request->url);
-            if (!empty($response)) {
-                $this->log->info('Cache hit for path: %s', $request->url);
-                $this->from_cache = true;
-                $main = $this->application->getFactory()->get('response');
-                foreach ($response->getParts() as $part) {
-                    if ($part instanceof CachedResponse) {
-                        $main->addResponse($this->application->dispatch($part->getRequest()));
-                    } else {
-                        $main->addContent($part);
-                    }
+        if (!$this->cache->has($request->url)) {
+            return;
+        }
+        /** @var $response CachedResponse */
+        $response = $this->cache->get($request->url);
+        if (!empty($response)) {
+            $this->log->write(Log::INFO, 'HTTPCache', 'Cache hit for path: %s', $request->url);
+            $this->from_cache = true;
+
+            $main = $this->container->get('\Miny\HTTP\Response');
+            foreach ($response->getParts() as $part) {
+                if ($part instanceof CachedResponse) {
+                    $main->addResponse(
+                        $this->container->get('\Miny\Application\Dispatcher')->dispatch($part->getRequest())
+                    );
+                } else {
+                    $main->addContent($part);
                 }
-                return $response;
             }
+
+            return $response;
+
         }
     }
 
     /**
      * @param string $path
+     *
      * @return boolean
      */
     private function checkPathPatterns($path)
@@ -83,6 +96,7 @@ class HTTPCache
                 return true;
             }
         }
+
         return false;
     }
 
