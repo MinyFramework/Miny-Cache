@@ -24,30 +24,18 @@ abstract class AbstractCacheDriver
         $this->index();
     }
 
+    abstract protected function gc();
+
+    abstract protected function index();
+
     public function __destruct()
     {
         $this->close();
     }
 
-    protected function checkKey($key)
-    {
-        if (!$this->has($key)) {
-            throw new OutOfBoundsException('Key not found: ' . $key);
-        }
-    }
+    abstract protected function close();
 
-    protected abstract function gc();
-    protected abstract function index();
-    protected abstract function close();
-    protected function keyNotFound($key, Exception $prev = NULL)
-    {
-        throw new OutOfBoundsException('Key not found: ' . $key, 0, $prev);
-    }
-
-    public function has($key)
-    {
-        return array_key_exists($key, $this->keys) && $this->keys[$key] != 'r';
-    }
+    abstract public function get($key);
 
     public function remove($key)
     {
@@ -76,9 +64,26 @@ abstract class AbstractCacheDriver
         $this->ttls[$key] = $ttl;
     }
 
+    protected function checkKey($key)
+    {
+        if (!$this->has($key)) {
+            throw new OutOfBoundsException('Key not found: ' . $key);
+        }
+    }
+
+    public function has($key)
+    {
+        return array_key_exists($key, $this->keys) && $this->keys[$key] != 'r';
+    }
+
+    protected function keyNotFound($key, Exception $prev = null)
+    {
+        throw new OutOfBoundsException('Key not found: ' . $key, 0, $prev);
+    }
+
     protected function saveRequired()
     {
-        return (bool) array_intersect($this->keys, array('r', 'm', 'a'));
+        return (bool)array_intersect($this->keys, array('r', 'm', 'a'));
     }
 
 }
