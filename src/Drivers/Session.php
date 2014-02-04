@@ -15,9 +15,9 @@ class Session extends AbstractCacheDriver
 {
     private $storage_key;
 
-    public function __construct($options)
+    public function __construct($storageKey)
     {
-        $this->storage_key = $options['storage_key'];
+        $this->storage_key = $storageKey;
         parent::__construct();
     }
 

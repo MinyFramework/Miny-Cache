@@ -30,15 +30,13 @@ class Module extends \Miny\Modules\Module
                     'storage_key' => 'miny_cache'
                 ),
                 'orm'           => array(
-                    'orm'   => '&orm',
                     'table' => 'miny_cache'
                 ),
                 'sqlite_memory' => array(
                     'table' => 'miny_cache'
                 ),
                 'sql'           => array(
-                    'driver' => '&pdo',
-                    'table'  => 'miny_cache'
+                    'table' => 'miny_cache'
                 ),
                 'default_cache' => 'session',
             )
@@ -47,37 +45,29 @@ class Module extends \Miny\Modules\Module
 
     public function init(BaseApplication $app)
     {
-        $factory    = $app->getFactory();
-        $parameters = $factory->getParameters();
+        $factory    = $app->getContainer();
+        $parameters = $app->getParameterContainer();
 
-        $factory->add('sql_cache', __NAMESPACE__ . '\Drivers\SQL')
-                ->setArguments('@cache:sql:driver', '@cache:sql:table');
-        $factory->add('session_cache', __NAMESPACE__ . '\Drivers\Session')
-                ->setArguments('@cache:session');
-        $factory->add('apc_cache', __NAMESPACE__ . '\Drivers\APC')
-                ->setArguments('@cache:apc');
-        $factory->add('orm_cache', __NAMESPACE__ . '\Drivers\ORM')
-                ->setArguments('@cache:orm:manager', '@cache:orm:table');
-        $factory->add('sqlite_memory_cache', __NAMESPACE__ . '\Drivers\SQLite_Memory')
-                ->setArguments('@cache:sqlite_memory:table');
+        $factory->addAlias(__NAMESPACE__ . '\Drivers\SQL', null, array(1 => '@cache:sql:table'));
+        $factory->addAlias(__NAMESPACE__ . '\Drivers\Session', null, array('@cache:session:storage_key'));
+        $factory->addAlias(__NAMESPACE__ . '\Drivers\APC', null, array('@cache:apc:storage_key'));
+        $factory->addAlias(__NAMESPACE__ . '\Drivers\ORM', null, array(1 => '@cache:orm:table'));
+        $factory->addAlias(__NAMESPACE__ . '\Drivers\SQLite_Memory', null, array('@cache:sqlite_memory:table'));
 
-        $default_cache = $parameters['cache']['default_cache'];
-
-        if (in_array($default_cache, array('sql', 'session', 'apc', 'orm', 'sqlite_memory'))) {
-            $factory->addAlias('cache', $default_cache . '_cache');
-        }
+        $factory->addAlias(__NAMESPACE__ . '\AbstractCacheDriver', $parameters['cache']['default_cache']);
 
         if ($parameters['cache']['http_cache']['enabled']) {
-            $factory->add('response', __NAMESPACE__ . '\ResponseCache\CachedResponse')
-                    ->setArguments('&request');
+            $factory->addAlias('\Miny\HTTP\Response', __NAMESPACE__ . '\ResponseCache\CachedResponse');
 
-            $factory->add('http_cache', __NAMESPACE__ . '\ResponseCache\HTTPCache')
-                    ->setArguments('&app', '&cache', '&log', '@cache:http_cache:cache_lifetime')
-                    ->addMethodCall('addPaths', '@cache:http_cache:paths');
+            $httpCache = $factory->get(
+                __NAMESPACE__ . '\ResponseCache\HTTPCache',
+                array(3 => '@cache:http_cache:cache_lifetime')
+            );
+            $httpCache->addPaths($parameters['cache']['http_cache']['paths']);
 
-            $factory->getBlueprint('events')
-                    ->addMethodCall('register', 'filter_request', '*http_cache::fetch')
-                    ->addMethodCall('register', 'filter_response', '*http_cache::store');
+            $events = $factory->get('\Miny\Event\EventDispatcher');
+            $events->register('filter_request', array($httpCache, 'fetch'));
+            $events->register('filter_response', array($httpCache, 'store'));
         }
     }
 }
