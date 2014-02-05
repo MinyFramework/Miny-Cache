@@ -38,7 +38,7 @@ class Module extends \Miny\Modules\Module
                 'sql'           => array(
                     'table' => 'miny_cache'
                 ),
-                'default_cache' => 'session',
+                'default_cache' => __NAMESPACE__ . '\\Drivers\\Session',
             )
         );
     }
