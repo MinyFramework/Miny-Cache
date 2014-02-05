@@ -24,7 +24,7 @@ class Session extends AbstractCacheDriver
     protected function gc()
     {
         if (!isset($_SESSION[$this->storage_key])) {
-            $_SESSION['cache'] = array();
+            $_SESSION[$this->storage_key] = array();
         } else {
             foreach ($_SESSION[$this->storage_key] as $key => $value) {
                 if (!isset($value['expiration']) || $value['expiration'] < time()) {
