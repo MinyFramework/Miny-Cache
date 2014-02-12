@@ -53,11 +53,11 @@ class Module extends \Miny\Modules\Module
         );
         $container->addConstructorArguments(
             __NAMESPACE__ . '\\Drivers\\Session',
-            array($this->getConfiguration('session:storage_key'))
+            $this->getConfiguration('session:storage_key')
         );
         $container->addConstructorArguments(
             __NAMESPACE__ . '\\Drivers\\APC',
-            array($this->getConfiguration('apc:storage_key'))
+            $this->getConfiguration('apc:storage_key')
         );
         $container->addConstructorArguments(
             __NAMESPACE__ . '\\Drivers\\ORM',
@@ -71,12 +71,12 @@ class Module extends \Miny\Modules\Module
         );
         $container->addConstructorArguments(
             __NAMESPACE__ . '\\Drivers\\SQLite_Memory',
-            array($this->getConfiguration('sqlite_memory:table'))
+            $this->getConfiguration('sqlite_memory:table')
         );
 
         $container->addAlias(
             __NAMESPACE__ . '\\AbstractCacheDriver',
-            array($this->getConfiguration('default_cache'))
+            $this->getConfiguration('default_cache')
         );
 
         if (!$this->getConfiguration('http_cache:enabled')) {
@@ -94,7 +94,7 @@ class Module extends \Miny\Modules\Module
                 3 => array($this->getConfiguration('http_cache:cache_lifetime'))
             )
         );
-        $httpCache->addPaths(array($this->getConfiguration('http_cache:paths')));
+        $httpCache->addPaths($this->getConfiguration('http_cache:paths'));
 
         $events = $container->get('\\Miny\\Event\\EventDispatcher');
         $events->register('filter_request', array($httpCache, 'fetch'));
