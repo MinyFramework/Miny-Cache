@@ -59,13 +59,13 @@ class HTTPCache
         if ($this->cache === null) {
             return;
         }
-        if (!$this->cache->has($request->url)) {
+        if (!$this->cache->has($request->getUrl())) {
             return;
         }
         /** @var $response CachedResponse */
-        $response = $this->cache->get($request->url);
+        $response = $this->cache->get($request->getUrl());
         if (!empty($response)) {
-            $this->log->write(Log::INFO, 'HTTPCache', 'Cache hit for path: %s', $request->url);
+            $this->log->write(Log::INFO, 'HTTPCache', 'Cache hit for path: %s', $request->getUrl());
             $this->from_cache = true;
 
             $main = $this->container->get('\Miny\HTTP\Response');
@@ -105,13 +105,13 @@ class HTTPCache
         if ($this->cache === null) {
             return;
         }
-        if (!in_array($request->url, $this->paths)) {
-            if (!$this->checkPathPatterns($request->url)) {
+        if (!in_array($request->getUrl(), $this->paths)) {
+            if (!$this->checkPathPatterns($request->getUrl())) {
                 return;
             }
         }
-        if (!$this->from_cache && $response->isCode(200) && $request->method === 'GET') {
-            $this->cache->store($request->url, $response, $this->cache_lifetime);
+        if (!$this->from_cache && $response->isCode(200) && $request->getMethod() === 'GET') {
+            $this->cache->store($request->getUrl(), $response, $this->cache_lifetime);
         }
     }
 }
