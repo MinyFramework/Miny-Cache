@@ -61,13 +61,8 @@ class Module extends \Miny\Modules\Module
         );
         $container->addConstructorArguments(
             __NAMESPACE__ . '\\Drivers\\ORM',
-            array(
-                1 => array(
-                    $this->getConfiguration(
-                        'orm:table'
-                    )
-                )
-            )
+            null,
+            $this->getConfiguration('orm:table')
         );
         $container->addConstructorArguments(
             __NAMESPACE__ . '\\Drivers\\SQLite_Memory',
