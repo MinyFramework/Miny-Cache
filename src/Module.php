@@ -10,6 +10,7 @@
 namespace Modules\Cache;
 
 use Miny\Application\BaseApplication;
+use Miny\CoreEvents;
 
 class Module extends \Miny\Modules\Module
 {
@@ -92,7 +93,7 @@ class Module extends \Miny\Modules\Module
         $httpCache->addPaths($this->getConfiguration('http_cache:paths'));
 
         $events = $container->get('\\Miny\\Event\\EventDispatcher');
-        $events->register('filter_request', array($httpCache, 'fetch'));
-        $events->register('filter_response', array($httpCache, 'store'));
+        $events->register(CoreEvents::FILTER_REQUEST, array($httpCache, 'fetch'));
+        $events->register(CoreEvents::FILTER_RESPONSE, array($httpCache, 'store'));
     }
 }
